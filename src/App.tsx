@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Github, FileText, Cpu, Target, BarChart3, Sparkles, Layers, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -54,6 +54,67 @@ const FadeIn = ({ children, delay = 0, className = "", y = 30 }: { children: Rea
   >
     {children}
   </motion.div>
+);
+
+const useDeferredMediaActivation = <T extends HTMLElement>() => {
+  const ref = useRef<T | null>(null);
+  const [isActive, setIsActive] = useState(false);
+
+  useEffect(() => {
+    if (isActive) return;
+
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setIsActive(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsActive(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '240px 0px' },
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [isActive]);
+
+  return { ref, isActive };
+};
+
+const GoogleDriveIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+    <path d="M9.1 3h5.9l6 10.4H15z" fill="#0F9D58" />
+    <path d="M8.8 3 3 13l2.95 5.1 5.9-10.2z" fill="#4285F4" />
+    <path d="M8.9 21H20.7l-2.95-5.1H5.95z" fill="#F4B400" />
+  </svg>
+);
+
+const HeroTitleA = () => (
+  <svg viewBox="0 0 132 180" aria-hidden="true" className="block h-[1.02em] w-[0.74em] overflow-visible">
+    <defs>
+      <linearGradient id="hero-title-a-gradient" x1="50%" y1="0%" x2="50%" y2="100%">
+        <stop offset="0%" stopColor="#fb7185" />
+        <stop offset="35%" stopColor="#fb7185" />
+        <stop offset="100%" stopColor="#fb923c" />
+      </linearGradient>
+    </defs>
+    <text
+      x="10"
+      y="148"
+      fill="url(#hero-title-a-gradient)"
+      fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      fontSize="164"
+      fontWeight="900"
+    >
+      A
+    </text>
+  </svg>
 );
 
 type ExperimentSeriesKey = 'hilSerl' | 'conrft' | 'twinRlNoBuffer' | 'twinRl';
@@ -457,9 +518,17 @@ const RealWorldExperimentsChart = () => {
 export default function App() {
   const [activeTab, setActiveTab] = useState('pick-place');
   const [activeRobustnessTab, setActiveRobustnessTab] = useState('pick-place');
+  const { ref: evaluationSectionRef, isActive: isEvaluationMediaActive } = useDeferredMediaActivation<HTMLElement>();
+  const { ref: robustnessSectionRef, isActive: isRobustnessMediaActive } = useDeferredMediaActivation<HTMLElement>();
   const teaserVideoSrc = `${import.meta.env.BASE_URL}videos/teaser.mp4`;
   const motivationImageSrc = `${import.meta.env.BASE_URL}images/motivation.png`;
   const pipelineImageSrc = `${import.meta.env.BASE_URL}images/pipline.png`;
+  const paperPdfUrl = `${import.meta.env.BASE_URL}TwinRL-VLA.pdf`;
+  const arxivUrl = 'https://arxiv.org/abs/2602.09023';
+  const arxivIconSrc = `${import.meta.env.BASE_URL}icon/ArXiv.svg`;
+  const twinAssetsDatasetUrl = 'https://drive.google.com/drive/folders/1f58K3IYd3RjkA-oTWW17bSZk4EM06JCV';
+  const heroActionButtonClass = 'group inline-flex h-14 items-center gap-3 rounded-full border border-purple-400/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-7 text-sm font-semibold text-white backdrop-blur-xl shadow-[0_0_36px_-18px_rgba(168,85,247,0.85)] transition-all duration-300 hover:border-purple-300/35 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.05))] hover:shadow-[0_0_64px_-18px_rgba(168,85,247,1)]';
+  const heroActionIconClass = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-purple-300/20 bg-purple-500/10 text-purple-100 shadow-[0_0_18px_-10px_rgba(168,85,247,0.9)]';
   const trainingVideoBase = `${import.meta.env.BASE_URL}videos/online_rl_training`;
   const evaluationVideoBase = `${import.meta.env.BASE_URL}videos/final_evaluation`;
   const robustnessVideoBase = `${import.meta.env.BASE_URL}videos/robustness`;
@@ -468,7 +537,7 @@ export default function App() {
     dark: 'relative z-20 bg-black',
   };
   const authors = [
-    { name: 'Qinwen Xu', href: 'https://github.com/zhourui9813/Twin-RL', tags: '1,*' },
+    { name: 'Qinwen Xu', href: 'https://twinrl.github.io/', tags: '1,*' },
     { name: 'Jiaming Liu', href: 'https://liujiaming1996.github.io/', tags: '1,*,†' },
     { name: 'Rui Zhou', href: 'https://zhourui9813.github.io/', tags: '4,*' },
     { name: 'Shaojun Shi', href: 'https://github.com/Daniel-Shii', tags: '1,*' },
@@ -616,19 +685,19 @@ export default function App() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-48 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col items-center justify-center min-h-screen z-10">
+      <section className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl flex-col items-center justify-center px-4 pt-28 pb-12 sm:px-6 md:pt-32 md:pb-14 lg:px-8 lg:pt-36 lg:pb-16 z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="text-center w-full"
+          className="mx-auto w-full max-w-[92rem] px-3 text-center md:px-6"
         >
           {/* Removed the extra line above the title as requested */}
           
-          <h1 className="overflow-visible text-5xl sm:text-7xl md:text-[8.25rem] lg:text-[10.1rem] font-black tracking-tighter text-white mb-6 pt-2 pb-3 leading-[0.92] drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
-            <span className="relative inline-flex items-end overflow-visible">
+          <h1 className="mb-2 overflow-visible pt-2 pb-1 text-[clamp(3rem,8.8vw,7.8rem)] font-black leading-[0.92] tracking-tighter text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
+            <span className="relative inline-flex items-end overflow-visible pr-[0.12em] -translate-x-[0.06em]">
               <span className="absolute inset-x-2 bottom-4 h-8 bg-gradient-to-r from-purple-500/0 via-fuchsia-500/40 to-orange-500/0 blur-2xl"></span>
-              <span className="relative inline-flex -space-x-[0.05em]">
+              <span className="relative inline-flex overflow-visible -space-x-[0.05em]">
                 {[
                   { letter: 'T', className: 'translate-y-[0.02em] -rotate-[1.5deg]', gradient: 'bg-[linear-gradient(180deg,#ffffff_0%,#f7e8ff_42%,#d8b4fe_70%,#fb7185_100%)]' },
                   { letter: 'w', className: '-translate-y-[0.02em] rotate-[1deg]', gradient: 'bg-[linear-gradient(180deg,#ffffff_0%,#f7e8ff_42%,#d8b4fe_70%,#fb7185_100%)]' },
@@ -639,27 +708,36 @@ export default function App() {
                   { letter: '-', className: 'translate-y-[0.06em] -rotate-[1deg] px-[0.02em]', gradient: 'bg-[linear-gradient(180deg,#c084fc_0%,#a855f7_100%)]' },
                   { letter: 'V', className: '-translate-y-[0.01em] rotate-[1.5deg]', gradient: 'bg-[linear-gradient(180deg,#c084fc_0%,#ec4899_55%,#fb7185_100%)]' },
                   { letter: 'L', className: 'translate-y-[0.02em] -rotate-[1.5deg]', gradient: 'bg-[linear-gradient(180deg,#f472b6_0%,#ec4899_55%,#fb7185_100%)]' },
-                  { letter: 'A', className: '-translate-y-[0.01em] rotate-[1deg]', gradient: 'bg-[linear-gradient(180deg,#fb7185_0%,#fb7185_35%,#fb923c_100%)]' },
-                ].map(({ letter, className, gradient }, index) => (
-                  <span
-                    key={`${letter}-${index}`}
-                    className={`relative inline-block ${className} text-transparent bg-clip-text ${gradient} [text-shadow:0_0_28px_rgba(244,114,182,0.16)]`}
-                  >
-                    {letter}
+                  { letter: 'A', className: '', gradient: 'bg-[linear-gradient(180deg,#fb7185_0%,#fb7185_35%,#fb923c_100%)]', wrapperClass: '-translate-y-[0.01em] origin-bottom-left rotate-[1deg] pr-[0.16em] pb-[0.08em]' },
+                ].map(({ letter, className, gradient, wrapperClass }, index) => (
+                  <span key={`${letter}-${index}`} className={`relative inline-block overflow-visible ${wrapperClass ?? ''}`}>
+                    {letter === 'A' ? (
+                      <span className="relative inline-flex items-end overflow-visible drop-shadow-[0_0_28px_rgba(244,114,182,0.16)]">
+                        <HeroTitleA />
+                      </span>
+                    ) : (
+                      <span
+                        className={`relative inline-block overflow-visible ${className} text-transparent bg-clip-text ${gradient} [text-shadow:0_0_28px_rgba(244,114,182,0.16)]`}
+                      >
+                        {letter}
+                      </span>
+                    )}
                   </span>
                 ))}
               </span>
             </span>
           </h1>
           
-          <h2 className="relative overflow-visible text-[1.55rem] md:text-[2.45rem] font-semibold text-[#f4f4f5] mb-10 pt-1 pb-2 leading-[1.16] max-w-5xl mx-auto tracking-[-0.03em] drop-shadow-[0_0_18px_rgba(255,255,255,0.12)]">
+          <h2
+            className="relative mx-auto mb-8 max-w-[min(90vw,58rem)] overflow-visible pt-0.5 pb-0.5 text-[clamp(1.1rem,3vw,2.05rem)] font-semibold leading-[1.14] tracking-[-0.03em] text-[#f4f4f5] drop-shadow-[0_0_18px_rgba(255,255,255,0.12)]"
+            style={{ textWrap: 'balance' }}
+          >
             <span className="absolute inset-x-20 top-1/2 h-10 -translate-y-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent blur-2xl"></span>
-            <span className="relative inline-block">
-              <span className="inline-block -rotate-[0.35deg] bg-[linear-gradient(180deg,#ffffff_0%,#f4f4f5_62%,#e4e4e7_100%)] bg-clip-text text-transparent">
-                Digital Twin-Driven Reinforcement Learning
+            <span className="relative">
+              <span className="-rotate-[0.35deg] bg-[linear-gradient(180deg,#ffffff_0%,#f4f4f5_62%,#e4e4e7_100%)] bg-clip-text text-transparent">
+                Digital Twin-Driven Reinforcement Learning{' '}
               </span>
-              <br className="hidden md:block" />
-              <span className="inline-block translate-y-[0.03em] rotate-[0.2deg] bg-[linear-gradient(180deg,#f8fafc_0%,#e4e4e7_68%,#c4b5fd_100%)] bg-clip-text text-transparent">
+              <span className="translate-y-[0.03em] rotate-[0.2deg] bg-[linear-gradient(180deg,#f8fafc_0%,#e4e4e7_68%,#c4b5fd_100%)] bg-clip-text text-transparent">
                 for Real-World Robotic Manipulation
               </span>
             </span>
@@ -674,8 +752,8 @@ export default function App() {
             </p>
           </div>
 
-          <div className="mb-12 max-w-5xl mx-auto">
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-3 text-base md:text-[1.08rem] leading-7 text-[#d4d4d8]">
+          <div className="mb-8 max-w-5xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[0.95rem] md:text-[1rem] leading-7 text-[#d4d4d8]">
               {authors.map((author) => (
                 <a
                   key={author.name}
@@ -692,7 +770,7 @@ export default function App() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm md:text-base text-[#a1a1aa]">
+            <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-sm md:text-[0.95rem] text-[#a1a1aa]">
               {affiliations.map((affiliation) => (
                 <span key={affiliation.id}>
                   <sup className="mr-1 text-purple-300 font-semibold">{affiliation.id}</sup>
@@ -701,22 +779,55 @@ export default function App() {
               ))}
             </div>
 
-            <p className="mt-4 text-xs md:text-sm text-[#71717a] tracking-wide">
+            <p className="mt-3 text-xs md:text-[0.82rem] text-[#71717a] tracking-wide">
               * Equal Contribution&nbsp;&nbsp;&nbsp;† Project Lead&nbsp;&nbsp;&nbsp;✉ Corresponding Author
             </p>
           </div>
           
-          <div className="flex flex-wrap justify-center gap-6 mb-24">
-            <a href="https://arxiv.org/abs/2602.09023" target="_blank" rel="noreferrer" className="relative inline-flex h-14 overflow-hidden rounded-full p-[1px] focus:outline-none group shadow-[0_0_60px_-10px_rgba(168,85,247,0.8)] hover:shadow-[0_0_80px_-5px_rgba(236,72,153,0.9)] transition-shadow duration-500">
-              <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#a855f7_0%,#ec4899_50%,#a855f7_100%)] opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-[#030303] px-8 py-1 text-sm font-medium text-white backdrop-blur-3xl transition-colors group-hover:bg-[#0a0a0a]">
-                <FileText className="w-5 h-5 mr-2" />
-                Read Paper
+          <div className="mb-10 flex flex-wrap justify-center gap-4 md:gap-5">
+            <a
+              href={arxivUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={heroActionButtonClass}
+            >
+              <span className={heroActionIconClass}>
+                <img src={arxivIconSrc} alt="" className="h-5 w-5 object-contain" />
               </span>
+              arXiv
             </a>
-            <a href="https://github.com/zhourui9813/TwinRL" target="_blank" rel="noreferrer" className="inline-flex h-14 items-center px-8 rounded-full bg-white/5 text-white border border-white/10 font-medium hover:bg-white/10 transition-all backdrop-blur-sm hover:border-white/20">
-              <Github className="w-5 h-5 mr-2" />
+            <a
+              href={paperPdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={heroActionButtonClass}
+            >
+              <span className={heroActionIconClass}>
+                <FileText className="h-4.5 w-4.5" />
+              </span>
+              Read Paper
+            </a>
+            <a
+              href="https://github.com/zhourui9813/TwinRL"
+              target="_blank"
+              rel="noreferrer"
+              className={heroActionButtonClass}
+            >
+              <span className={heroActionIconClass}>
+                <Github className="h-4.5 w-4.5" />
+              </span>
               View Code
+            </a>
+            <a
+              href={twinAssetsDatasetUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={heroActionButtonClass}
+            >
+              <span className={heroActionIconClass}>
+                <GoogleDriveIcon />
+              </span>
+              Twin Assets &amp; Dataset
             </a>
           </div>
 
@@ -725,13 +836,14 @@ export default function App() {
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="relative max-w-6xl mx-auto rounded-[2rem] overflow-hidden shadow-[0_0_80px_-20px_rgba(168,85,247,0.2)] border border-white/10 bg-transparent aspect-video group cursor-pointer"
+            className="relative mx-auto aspect-video max-w-5xl rounded-[2rem] overflow-hidden border border-white/10 bg-transparent shadow-[0_0_80px_-20px_rgba(168,85,247,0.2)] group cursor-pointer"
           >
             <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent opacity-90 z-10 pointer-events-none"></div>
             <video
               src={teaserVideoSrc}
               className="w-full h-full object-cover opacity-70 mix-blend-screen"
               autoPlay
+              controls
               muted
               loop
               playsInline
@@ -763,7 +875,7 @@ export default function App() {
               <h2 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                 Abstract
               </h2>
-              <p className="text-xl text-[#a1a1aa] max-w-3xl mx-auto md:mx-0">
+              <p className="mx-auto text-xl text-[#a1a1aa] md:mx-0 lg:max-w-none lg:whitespace-nowrap">
                 A digital twin-real-world collaborative reinforcement learning framework for efficient VLA manipulation.
               </p>
             </div>
@@ -793,7 +905,7 @@ export default function App() {
           <FadeIn>
             <div className="mb-16 text-center md:text-left">
               <h2 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">Motivation</h2>
-              <p className="text-xl text-[#a1a1aa] max-w-2xl mx-auto md:mx-0">
+              <p className="mx-auto text-xl text-[#a1a1aa] md:mx-0 lg:max-w-none lg:whitespace-nowrap">
                 Why do we need a digital twin-driven approach for Vision-Language-Action models?
               </p>
             </div>
@@ -844,7 +956,7 @@ export default function App() {
           <FadeIn>
             <div className="mb-16 text-center md:text-left">
               <h2 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter">Methodology</h2>
-              <p className="text-xl text-[#a1a1aa] max-w-2xl mx-auto md:mx-0">
+              <p className="mx-auto text-xl text-[#a1a1aa] md:mx-0 lg:max-w-none lg:whitespace-nowrap">
                 A collaborative framework bridging digital twins and real-world robots.
               </p>
             </div>
@@ -917,7 +1029,7 @@ export default function App() {
       </section>
 
       {/* Stats / Evaluation */}
-      <section id="evaluation" className={`py-32 ${sectionBackgrounds.dark} border-y border-white/5`}>
+      <section ref={evaluationSectionRef} id="evaluation" className={`py-32 ${sectionBackgrounds.dark} border-y border-white/5`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-24 text-center divide-y md:divide-y-0 md:divide-x divide-white/5">
@@ -1003,13 +1115,13 @@ export default function App() {
                           <div className="aspect-video bg-[#030303] rounded-2xl border border-purple-500/20 overflow-hidden shadow-[0_0_30px_rgba(168,85,247,0.15)] hover:shadow-[0_0_50px_rgba(168,85,247,0.3)] transition-shadow duration-500">
                             <video
                               key={`${activeTask.id}-${section.key}-id`}
-                              src={section.videos.id}
+                              src={isEvaluationMediaActive ? section.videos.id : undefined}
                               className="w-full h-full object-cover"
                               autoPlay
                               loop
                               muted
                               playsInline
-                              preload="metadata"
+                              preload={isEvaluationMediaActive ? "metadata" : "none"}
                             />
                           </div>
                         </div>
@@ -1021,13 +1133,13 @@ export default function App() {
                           <div className="aspect-video bg-[#030303] rounded-2xl border border-pink-500/20 overflow-hidden shadow-[0_0_30px_rgba(236,72,153,0.15)] hover:shadow-[0_0_50px_rgba(236,72,153,0.3)] transition-shadow duration-500">
                             <video
                               key={`${activeTask.id}-${section.key}-ood`}
-                              src={section.videos.ood}
+                              src={isEvaluationMediaActive ? section.videos.ood : undefined}
                               className="w-full h-full object-cover"
                               autoPlay
                               loop
                               muted
                               playsInline
-                              preload="metadata"
+                              preload={isEvaluationMediaActive ? "metadata" : "none"}
                             />
                           </div>
                         </div>
@@ -1042,12 +1154,12 @@ export default function App() {
       </section>
 
       {/* Robustness Study */}
-      <section id="robustness" className={`py-32 ${sectionBackgrounds.glow}`}>
+      <section ref={robustnessSectionRef} id="robustness" className={`py-32 ${sectionBackgrounds.glow}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="mb-16 text-center md:text-left">
               <h2 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter">Robustness</h2>
-              <p className="text-xl text-[#a1a1aa] max-w-2xl mx-auto md:mx-0">
+              <p className="mx-auto text-xl text-[#a1a1aa] md:mx-0 lg:max-w-none lg:whitespace-nowrap">
                 Evaluating policy resilience under severe environmental perturbations.
               </p>
             </div>
@@ -1122,13 +1234,13 @@ export default function App() {
                         <div className={`aspect-video bg-[#030303] rounded-2xl border overflow-hidden transition-shadow duration-500 ${accentStyles.border} ${accentStyles.shadow}`}>
                           <video
                             key={`${activeRobustnessTask.id}-${video.src}`}
-                            src={video.src}
+                            src={isRobustnessMediaActive ? video.src : undefined}
                             className="w-full h-full object-cover"
                             autoPlay
                             loop
                             muted
                             playsInline
-                            preload="metadata"
+                            preload={isRobustnessMediaActive ? "metadata" : "none"}
                           />
                         </div>
                       </div>
@@ -1150,7 +1262,7 @@ export default function App() {
               <h2 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                 Citation
               </h2>
-              <p className="text-xl text-[#a1a1aa] max-w-2xl mx-auto md:mx-0">
+              <p className="mx-auto text-xl text-[#a1a1aa] md:mx-0 lg:max-w-none lg:whitespace-nowrap">
                 If you find TwinRL-VLA useful, please cite our paper.
               </p>
             </div>
